@@ -1,0 +1,7 @@
+{
+  "name": "phase-fusion-monorepo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Reilly O'Donnell <odonnell.reilly.j@gmail.com>",
+  "license": "MIT"
+}
