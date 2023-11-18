@@ -15,7 +15,7 @@ export function useHome() {
   const [showCreateProfile, setShowCreateProfile] = React.useState(false);
   const [canRejoin, setCanRejoin] = React.useState(false);
   React.useEffect(() => {
-    socket?.on('show create profile', () => {
+    socket?.on('showCreateProfile', () => {
       setShowCreateProfile(true);
     });
   }, [socket]);
@@ -27,11 +27,11 @@ export function useHome() {
   }, [socket]);
 
   React.useEffect(() => {
-    socket?.on('rejoin lobby', (passed) => {
-      const parsed = JSON.parse(passed);
-      if (parsed) {
+    socket?.on('rejoinLobby', (passed) => {
+      // const parsed = JSON.parse(passed);
+      if (passed) {
         setCanRejoin(true);
-        setLobby(parsed);
+        setLobby(passed);
       }
     });
   }, [socket, lobby]);
@@ -42,21 +42,23 @@ export function useHome() {
 
   function createLobby() {
     setError('');
-    socket?.emit('create lobby', user.id, (lobby: Lobby) => {
+    socket?.emit('createLobby', user.id, (lobby) => {
+      if (!lobby) {
+        setError('Error creating lobby');
+        setLobby(null);
+        return;
+      }
       const { id: lobbyId, roomCode, players } = lobby;
       if (!lobbyId || !roomCode) {
         setError('Error creating lobby');
         setLobby(null);
         return;
       }
-      console.log("Oh shit it's here line 56");
       setLobby(lobby);
     });
   }
 
   function joinLobby(lobby: Lobby) {
-    console.log("Oh shit it's here line 65");
-
     setLobby(lobby);
   }
 
