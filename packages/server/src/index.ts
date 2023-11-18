@@ -5,6 +5,12 @@ import { setupProfileListener } from './profile/profile';
 import { setupLobbyListeners } from './lobby/lobby';
 import { setupGameListeners } from './game/game';
 import { getLobbyData, getUserData, setUserData } from './helpers/redis';
+import {
+  ClientToServerEvents,
+  InterServerEvents,
+  ServerToClientEvents,
+  SocketData,
+} from '@phase-fusion/shared/socket';
 
 const client = createClient();
 
@@ -29,7 +35,12 @@ client.on('error', (err: string) => {
   //console.log(`Error:${err}`);
 });
 
-const io = new Server({});
+const io = new Server<
+  ClientToServerEvents,
+  ServerToClientEvents,
+  InterServerEvents,
+  SocketData
+>({});
 
 io.use((socket, next) => {
   let token = socket.handshake.auth['token'];
@@ -60,7 +71,7 @@ io.on('connection', async (socket) => {
       data: { id: socket.data.token, socketId: socket.id },
     });
 
-    socket.emit('show create profile');
+    socket.emit('showCreateProfile');
     return;
   }
 
@@ -69,14 +80,14 @@ io.on('connection', async (socket) => {
     const lobby = await getLobbyData({ client, lobbyCode: userData.roomCode });
     if (lobby) {
       socket.join(userData.roomCode);
-      socket.emit('rejoin lobby', lobby);
+      socket.emit('rejoinLobby', lobby);
     }
   }
 
   socket.emit('profile', userData);
 
   if (!userData.name) {
-    socket.emit('show create profile');
+    socket.emit('showCreateProfile');
   }
 
   // check if their socket.id matches what's stored

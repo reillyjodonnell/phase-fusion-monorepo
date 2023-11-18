@@ -13,14 +13,25 @@ export type Player = {
   isReady: boolean;
 };
 
-export interface ServerToClientEvents {
-  token: (token: string) => void;
-  showCreateProfile: () => void;
+interface ServerToClientLobbyEvents {
   rejoinLobby: (lobby: Lobby) => void;
+  playerJoinedLobby: (player: Player) => void;
+  playerReadyLobby: (userId: string, isReady: boolean) => void;
+  playerLeftLobby: (userId: string) => void;
+}
+
+interface ServerToClientProfileEvents {
   profile: (userData: UserData) => void;
-  playerJoined: (player: Player) => void;
-  playerReadyUpdate: (userId: string, isReady: boolean) => void;
-  playerLeft: (userId: string) => void;
+  showCreateProfile: () => void;
+}
+
+interface ServerToClientGameEvents {}
+
+export interface ServerToClientEvents
+  extends ServerToClientLobbyEvents,
+    ServerToClientGameEvents,
+    ServerToClientProfileEvents {
+  token: (token: string) => void;
   // Add more events as per your application's requirements
 }
 

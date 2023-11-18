@@ -1,5 +1,5 @@
 import type { createClient } from 'redis';
-import type { Lobby } from '../game/game';
+import type { Lobby } from '@phase-fusion/shared/socket';
 
 export type User = {
   id: string;

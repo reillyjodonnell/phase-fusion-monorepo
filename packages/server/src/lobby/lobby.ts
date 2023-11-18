@@ -3,7 +3,7 @@ import type { Server, Socket } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import randomstring from 'randomstring';
 import { generateId } from '../helpers/helper';
-
+import type { Lobby } from '@shared/socket';
 export const setupLobbyListeners = (
   socket: Socket,
   io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>,

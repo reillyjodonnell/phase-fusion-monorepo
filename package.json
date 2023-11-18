@@ -1,6 +1,14 @@
 {
   "name": "phase-fusion-monorepo",
   "version": "1.0.0",
+  "private": "true",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "app": "yarn workspace app",
+    "server": "yarn workspace server"
+  },
   "main": "index.js",
   "author": "Reilly O'Donnell <odonnell.reilly.j@gmail.com>",
   "license": "MIT"
