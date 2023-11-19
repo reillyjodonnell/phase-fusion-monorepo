@@ -43,12 +43,14 @@ export function useHome() {
   function createLobby() {
     setError('');
     socket?.emit('createLobby', user.id, (lobby) => {
+      console.log('lobby', lobby);
       if (!lobby) {
         setError('Error creating lobby');
         setLobby(null);
         return;
       }
       const { id: lobbyId, roomCode, players } = lobby;
+      console.log(lobby);
       if (!lobbyId || !roomCode) {
         setError('Error creating lobby');
         setLobby(null);

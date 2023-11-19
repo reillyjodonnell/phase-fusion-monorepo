@@ -1,14 +1,5 @@
 import type { createClient } from 'redis';
-import type { Lobby } from '@phase-fusion/shared/socket';
-
-export type User = {
-  id: string;
-  name: string;
-  avatar: string;
-  roomCode: string;
-  socketId: string;
-  isReady: boolean;
-};
+import type { Lobby, User } from '@phase-fusion/shared/socket';
 
 export type TokenData = {
   id: string;
@@ -28,9 +19,11 @@ export async function setUserData({
   token,
   data,
 }: SetUserTokenProps): Promise<void> {
-  // Convert data to a format suitable for hSet (flattened key-value pairs)
-  const flattenedData = Object.entries(data).flat();
-  await client.hSet(`user:${token}`, flattenedData);
+  // redis doesn't support boolean values so we have to convert to a string
+  if (typeof data.isReady === 'boolean') {
+    data.isReady = data.isReady.toString();
+  }
+  await client.hSet(`user:${token}`, data);
 }
 
 interface GetUserDataProps {
@@ -42,8 +35,16 @@ export async function getUserData({
   client,
   token,
 }: GetUserDataProps): Promise<User | null> {
-  const data = await client.hGetAll(`user:${token}`);
-  return data && Object.keys(data).length > 0 ? (data as User) : null;
+  try {
+    const data = await client.hGetAll(`user:${token}`);
+    if (data && typeof data.isReady === 'string') {
+      data.isReady = data.isReady === 'true';
+    }
+    return data && Object.keys(data).length > 0 ? (data as User) : null;
+  } catch (err) {
+    console.error(err);
+    throw new Error('Failed at getUserData');
+  }
 }
 
 interface SetLobbyDataProps {
@@ -58,8 +59,12 @@ export async function setLobbyData({
   lobbyData,
 }: SetLobbyDataProps): Promise<void> {
   // Convert data to a format suitable for hSet (flattened key-value pairs)
-
-  await client.set(`lobby:${lobbyCode}`, JSON.stringify(lobbyData));
+  try {
+    console.log('Setting lobby data');
+    await client.set(`lobby:${lobbyCode}`, JSON.stringify(lobbyData));
+  } catch (err) {
+    console.log("setLobbyData's error: " + err);
+  }
 }
 
 interface DeleteLobbyDataProps {
@@ -84,6 +89,10 @@ export async function getLobbyData({
   client,
   lobbyCode,
 }: GetLobbyDataProps): Promise<Lobby | null> {
-  const data = await client.get(`lobby:${lobbyCode}`);
-  return data ? JSON.parse(data) : null;
+  try {
+    const data = await client.get(`lobby:${lobbyCode}`);
+    return data ? JSON.parse(data) : null;
+  } catch (err) {
+    console.log('GetLobbyData error: ' + err);
+  }
 }

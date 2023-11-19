@@ -27,7 +27,7 @@ import { getPointsFromHand } from '../game/points/points';
 import { type Server, type Socket } from 'socket.io';
 import { type DefaultEventsMap } from 'socket.io/dist/typed-events';
 import { generateId } from '../helpers/helper';
-import { RedisClientType } from 'redis';
+import { RedisClientType } from '..';
 
 export type Lobby = {
   id: string;

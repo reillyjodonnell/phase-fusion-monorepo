@@ -1,10 +1,5 @@
+import { User } from '@phase-fusion/shared/socket';
 import React from 'react';
-
-export type User = {
-  name: string | null;
-  id: string;
-  avatar: string | null;
-};
 
 type UserContextType = {
   user: User;

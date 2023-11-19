@@ -3,25 +3,28 @@ export type Lobby = {
   createdAt: number;
   roomCode: string;
   maxPlayers: number;
-  players: Player[];
+  players: User[];
 };
 
-export type Player = {
+export type User = {
   id: string;
   name: string;
   avatar: string;
+  roomCode: string;
+  socketId: string;
+  // isReady is a boolean but redis doesn't support it
   isReady: boolean;
 };
 
 interface ServerToClientLobbyEvents {
   rejoinLobby: (lobby: Lobby) => void;
-  playerJoinedLobby: (player: Player) => void;
+  playerJoinedLobby: (player: User) => void;
   playerReadyLobby: (userId: string, isReady: boolean) => void;
   playerLeftLobby: (userId: string) => void;
 }
 
 interface ServerToClientProfileEvents {
-  profile: (userData: UserData) => void;
+  profile: (userData: User) => void;
   showCreateProfile: () => void;
 }
 
@@ -56,6 +59,8 @@ export interface ClientToServerEvents {
     roomCode: string,
     callback: (lobby: Lobby | null) => void
   ) => void;
+  updateProfile: (userData: User, callback: (response: User) => void) => void;
+
   // Add other client-to-server events as needed
 }
 export interface InterServerEvents {

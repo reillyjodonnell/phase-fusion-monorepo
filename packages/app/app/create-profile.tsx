@@ -12,7 +12,8 @@ export function CreateProfile({
 
   const { user, setUser } = useUser();
   function sendProfile() {
-    socket?.emit('update profile', user, (user: User) => {
+    console.log(socket?.connected);
+    socket?.emit('updateProfile', user, (user: User) => {
       if (user) {
         setUser(user);
         setShowCreateProfile(false);
@@ -28,6 +29,9 @@ export function CreateProfile({
           </Text>
           <Text className="text-6xl text-[#fafafa] font-extrabold shadow text-center py-4 ">
             Phase Fusion!
+          </Text>
+          <Text className="text-6xl text-[#fafafa] font-extrabold shadow text-center py-4 ">
+            {user.name}
           </Text>
         </View>
         <TextInput

@@ -1,15 +1,17 @@
-import type { RedisClientType } from 'redis';
-import type { Server, Socket } from 'socket.io';
-import { DefaultEventsMap } from 'socket.io/dist/typed-events';
+import { IOType, SocketType } from '..';
+import { RedisClientType } from '..';
+import { setUserData } from '../helpers/redis';
 
 export const setupProfileListener = (
-  socket: Socket,
-  io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>,
+  socket: SocketType,
+  io: IOType,
   client: RedisClientType
 ) => {
-  socket.on('update profile', async (data, callback) => {
+  socket.on('updateProfile', async (data, callback) => {
+    console.log('updateProfile');
     const token = socket.data.token;
-    await client.set(`user:${token}`, JSON.stringify(data));
+    await setUserData({ client, token, data });
     callback(data);
+    console.log('Called callback with: ', data.name);
   });
 };

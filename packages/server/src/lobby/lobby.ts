@@ -1,51 +1,56 @@
-import type { RedisClientType } from 'redis';
-import type { Server, Socket } from 'socket.io';
-import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import randomstring from 'randomstring';
 import { generateId } from '../helpers/helper';
-import type { Lobby } from '@shared/socket';
+import { IOType, RedisClientType, SocketType } from '..';
+import {
+  getLobbyData,
+  getUserData,
+  setLobbyData,
+  setUserData,
+} from '../helpers/redis';
+import { Lobby, User } from '@phase-fusion/shared/socket';
 export const setupLobbyListeners = (
-  socket: Socket,
-  io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>,
+  socket: SocketType,
+  io: IOType,
   client: RedisClientType
 ) => {
-  socket.on('create lobby', async (userId, callback) => {
+  socket.on('createLobby', async (userId, callback) => {
+    console.log('Create lobby');
     // continue to generate a room code until it's unique
     let unique = false;
     let roomCode = '';
+    console.log('Wut');
 
     while (!unique) {
+      console.log('Here');
       // generate a room code
       roomCode = randomstring.generate({
         capitalization: 'uppercase',
         length: 6,
       });
       // check if that room code exists within the database
-      const exists = await client.GET(`lobby:${roomCode}`);
+      const exists = await getLobbyData({ client, lobbyCode: roomCode });
 
       if (!exists) {
         unique = true;
       }
     }
+    console.log('line 37');
 
     // fetch the user's profile
-    const user = await client.GET(`user:${userId}`);
+    const user = await getUserData({ client, token: userId });
 
-    //console.log(user);
+    if (!user) {
+      callback(null);
+      return;
+    }
 
-    const jsonUser = JSON.parse(user ?? 'null');
-
-    const userWithRoomCode = {
-      ...jsonUser,
+    const formattedUser: Partial<User> = {
+      ...user,
+      isReady: 'false',
       roomCode,
     };
 
-    client.SET(`user:${userId}`, JSON.stringify(userWithRoomCode));
-
-    const formattedUser = {
-      ...jsonUser,
-      isReady: false,
-    };
+    await setUserData({ client, token: userId, data: formattedUser });
 
     const lobby: Lobby = {
       id: generateId(),
@@ -56,13 +61,13 @@ export const setupLobbyListeners = (
     };
 
     try {
-      await client.SET(`lobby:${roomCode}`, JSON.stringify(lobby));
+      await setLobbyData({ client, lobbyCode: roomCode, lobbyData: lobby });
       callback(lobby);
       // put socket in a room with that id
       socket.join(roomCode);
     } catch (err) {
-      //console.log('Oh shit', err);
-      callback(null, null);
+      console.log('Oh shit', err);
+      callback(null);
     }
   });
 
