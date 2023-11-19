@@ -40,7 +40,6 @@ export default function useDiscard(
   }, [socket]);
 
   function takeCardFromdiscard() {
-    console.log('Taking card from discard pile');
     // if type is the skip you can't pick it up
     if (discard?.type === 'skip') return;
     if (!discard) return;

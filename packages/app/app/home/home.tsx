@@ -25,14 +25,11 @@ export function Home() {
 
   if (game) return <GameManager game={game} />;
 
-  console.log('lobby', lobby);
-
   // if (canRejoin) {
   //   return <Text>User has previous existing game</Text>;
   // }
 
   if (lobby) {
-    console.log('We have lobby and are returning the Lobby component!');
     return (
       <LobbyComponent
         lobby={lobby}

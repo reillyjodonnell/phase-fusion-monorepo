@@ -1,10 +1,10 @@
-import { Socket } from 'socket.io-client';
 import { View, Text, TouchableOpacity } from 'react-native';
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import CheckSVG from './components/check-svg';
 import UserSVG from './components/user-svg';
-import { useUser, type User } from './contexts/user-context';
+import { useUser } from './contexts/user-context';
 import { useSocket } from './contexts/socket-context';
+import { User } from '@phase-fusion/shared/socket';
 
 const MAXIMUM_PLAYERS_IN_LOBBY = 2;
 const MINIMUM_PLAYERS = 2;
@@ -44,37 +44,51 @@ export function Lobby({
   }, []);
 
   useEffect(() => {
-    socket?.on('player joined', (player) => {
-      console.log('Here?');
-      // optimistic update
-      setLobby((prev: Lobby) => {
-        return {
-          ...prev,
-          players: [player, ...prev.players],
-        };
+    function addPlayerToLobby(player: LobbyPlayer) {
+      // check if the player is already in the lobby
+      const playerAlreadyInLobby = lobby.players.some(
+        (p) => p.id === player.id
+      );
+
+      if (playerAlreadyInLobby) {
+        return;
+      }
+
+      setLobby({
+        ...lobby,
+        players: [...lobby.players, player],
       });
-    });
+    }
+    socket?.on('playerJoinedLobby', addPlayerToLobby);
+
+    return () => {
+      socket?.off('playerJoinedLobby', addPlayerToLobby);
+    };
   }, []);
 
   useEffect(() => {
-    socket?.on('player left', (playerId) => {
-      // optimistic update
-      console.log('Here?');
-
+    function removePlayerFromLobby(playerId: string) {
       setLobby((prev) => {
-        return {
+        if (!prev) return prev;
+        // remove that player by it's id in the lobby
+        const updatedLobby = {
           ...prev,
           players: prev.players.filter((player) => player.id !== playerId),
         };
+        return updatedLobby;
       });
-    });
+    }
+    socket?.on('playerLeftLobby', removePlayerFromLobby);
+
+    return () => {
+      socket?.off('playerLeftLobby', removePlayerFromLobby);
+    };
   }, []);
 
   useEffect(() => {
-    socket?.on('player ready update', (playerId, isReady) => {
-      console.log('Here?');
-
+    function playerReadyLobby(playerId: string, isReady: boolean) {
       setLobby((prev) => {
+        if (!prev) return prev;
         return {
           ...prev,
           players: prev.players.map((player) => {
@@ -85,25 +99,30 @@ export function Lobby({
           }),
         };
       });
-    });
+    }
+    socket?.on('playerReadyLobby', playerReadyLobby);
+
+    return () => {
+      socket?.off('playerReadyLobby', playerReadyLobby);
+    };
   }, []);
 
   function toggleReady({ ready }: { ready: boolean; id: string }) {
     socket?.emit(
-      'toggle player ready',
+      'togglePlayerReady',
       ready,
       user.id,
       lobby.roomCode,
-      (data: Lobby) => {
+      (data) => {
         if (!data) {
           return;
         }
       }
     );
-    // optimistic update
-    console.log('Here?');
 
     setLobby((prev) => {
+      if (!prev) return prev;
+
       return {
         ...prev,
         players: prev.players.map((player) => {

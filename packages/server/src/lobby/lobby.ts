@@ -62,71 +62,61 @@ export const setupLobbyListeners = (
       // put socket in a room with that id
       socket.join(roomCode);
     } catch (err) {
-      console.log('Oh shit', err);
       callback(null);
     }
   });
 
-  socket.on('join lobby', async (roomCode, userId, callback) => {
-    // fetch the lobby
-    const lobby = await client.GET(`lobby:${roomCode}`);
-    const jsonLobby: Lobby = JSON.parse(lobby ?? 'null');
+  socket.on('joinLobby', async (roomCode, userId, callback) => {
+    const lobby = await getLobbyData({
+      client,
+      lobbyCode: roomCode,
+    });
 
-    //fetch the user
-    const user = await client.GET(`user:${userId}`);
-    const jsonUser = JSON.parse(user ?? 'null');
-
-    const userWithRoomCode = {
-      ...jsonUser,
+    const userWithRoomCode: Partial<User> = {
       roomCode,
     };
 
-    client.SET(`user:${userId}`, JSON.stringify(userWithRoomCode));
+    await setUserData({ client, token: userId, data: userWithRoomCode });
+
+    const user = await getUserData({ client, token: userId });
 
     if (!lobby) {
       callback(null);
-      //console.log(`Lobby with code: ${roomCode} not found`);
       return;
     }
 
     if (!user) {
       callback(null);
-      //console.log(`User with id: ${userId} not found`);
       return;
     }
 
-    //console.log(`lobby players`, jsonLobby.players);
-
     const mergedLobby = {
-      ...jsonLobby,
-      players: [...jsonLobby.players, jsonUser],
+      ...lobby,
+      players: [...lobby.players, user],
     };
 
-    //console.log('joining player: ', jsonUser);
-
-    // add the user to the lobby
-    await client.SET(`lobby:${roomCode}`, JSON.stringify(mergedLobby));
+    await setLobbyData({ client, lobbyCode: roomCode, lobbyData: mergedLobby });
 
     callback(mergedLobby);
 
     // emit to all users in the lobby that a new user has joined
-    io.to(roomCode).emit('player joined', jsonUser);
+    io.to(roomCode).emit('playerJoinedLobby', user);
 
     // join the room
     socket.join(roomCode);
   });
 
   socket.on(
-    'toggle player ready',
+    'togglePlayerReady',
     async (isReady, userId, roomCode, callback) => {
       // get the current state
-      const data = JSON.parse(
-        (await client.GET(`lobby:${roomCode}`)) ?? 'null'
-      );
+      const data = await getLobbyData({ client, lobbyCode: roomCode });
+
+      if (!data) throw new Error('Lobby not found');
 
       const updatedLobby = {
         ...data,
-        players: data.players.map((player: Player) => {
+        players: data.players.map((player) => {
           if (player.id === userId) {
             return {
               ...player,
@@ -137,12 +127,15 @@ export const setupLobbyListeners = (
         }),
       };
       try {
-        await client.SET(`lobby:${roomCode}`, JSON.stringify(updatedLobby));
+        await setLobbyData({
+          client,
+          lobbyCode: roomCode,
+          lobbyData: updatedLobby,
+        });
         callback(updatedLobby);
         // emit to lobby
-        io.to(roomCode).emit('player ready update', userId, isReady);
+        io.to(roomCode).emit('playerReadyLobby', userId, isReady);
       } catch (err) {
-        //console.log(err);
         callback(null);
       }
     }
@@ -156,14 +149,11 @@ export const setupLobbyListeners = (
     const userLeftLoby: Partial<User> = {
       roomCode: '',
     };
-    console.log(data);
     await setUserData({ client, token: userId, data: userLeftLoby });
 
     // if this is the last player in the lobby, delete the lobby
     if (data.players.length === 1) {
-      console.log('Only one player left, deleting lobby');
-      const res = await client.DEL(`lobby:${roomCode}`);
-      console.log(res);
+      await client.DEL(`lobby:${roomCode}`);
       callback(null);
       // remove the lobby from the socket
       socket.leave(roomCode);
@@ -171,7 +161,7 @@ export const setupLobbyListeners = (
     }
     const updatedLobby = {
       ...data,
-      players: data.players.filter((player: Player) => player.id !== userId),
+      players: data.players.filter((player) => player.id !== userId),
     };
 
     try {
@@ -182,12 +172,11 @@ export const setupLobbyListeners = (
       });
       callback(updatedLobby);
       // emit to lobby
-      io.to(roomCode).emit('player left', userId);
+      io.to(roomCode).emit('playerLeftLobby', userId);
 
       // remove the socket
       socket.leave(roomCode);
     } catch (err) {
-      //console.log(err);
       callback(null);
     }
   });

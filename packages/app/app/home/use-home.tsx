@@ -1,6 +1,6 @@
 import React from 'react';
 import { useUser } from '../contexts/user-context';
-import { type Lobby } from '../lobby';
+import { Lobby } from '../lobby';
 import GameManager from '../game-manager';
 import { useSocket } from '../contexts/socket-context';
 
@@ -14,10 +14,16 @@ export function useHome() {
   const [roomCodeInput, setRoomCodeInput] = React.useState('');
   const [showCreateProfile, setShowCreateProfile] = React.useState(false);
   const [canRejoin, setCanRejoin] = React.useState(false);
+
   React.useEffect(() => {
-    socket?.on('showCreateProfile', () => {
+    function showCreateProfile() {
       setShowCreateProfile(true);
-    });
+    }
+    socket?.on('showCreateProfile', showCreateProfile);
+
+    return () => {
+      socket?.off('showCreateProfile', showCreateProfile);
+    };
   }, [socket]);
 
   React.useEffect(() => {
@@ -27,13 +33,17 @@ export function useHome() {
   }, [socket]);
 
   React.useEffect(() => {
-    socket?.on('rejoinLobby', (passed) => {
-      // const parsed = JSON.parse(passed);
+    function rejoinLobby(passed: Lobby) {
       if (passed) {
         setCanRejoin(true);
         setLobby(passed);
       }
-    });
+    }
+    socket?.on('rejoinLobby', rejoinLobby);
+
+    return () => {
+      socket?.off('rejoinLobby', rejoinLobby);
+    };
   }, [socket, lobby]);
 
   function returnToMenu() {
@@ -43,14 +53,12 @@ export function useHome() {
   function createLobby() {
     setError('');
     socket?.emit('createLobby', user.id, (lobby) => {
-      console.log('lobby', lobby);
       if (!lobby) {
         setError('Error creating lobby');
         setLobby(null);
         return;
       }
       const { id: lobbyId, roomCode, players } = lobby;
-      console.log(lobby);
       if (!lobbyId || !roomCode) {
         setError('Error creating lobby');
         setLobby(null);

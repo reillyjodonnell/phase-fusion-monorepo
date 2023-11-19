@@ -37,7 +37,6 @@ export function UserIdProvider({ children }: { children: React.ReactNode }) {
         setUserId(res);
         setFetching(false);
       } catch (e) {
-        console.log(e);
         // saving error
         setFetching(false);
       }

@@ -63,7 +63,6 @@ function tokenMiddleware(socket: SocketType, next: any) {
 }
 
 async function handleConnection(socket: SocketType) {
-  console.log('a user connected');
   const token = socket.data.token || uuid();
   const userData = await getUserData({ client, token });
   // if userData is null this fn will return; otherwise it will continue
@@ -74,7 +73,6 @@ async function handleConnection(socket: SocketType) {
   } else {
     await handleExistingUser(socket, userData!, token);
   }
-  console.log('Setting up listeners');
   setupProfileListener(socket, io, client);
   setupLobbyListeners(socket, io, client);
   setupGameListeners(socket, io, client);
@@ -83,7 +81,6 @@ async function handleConnection(socket: SocketType) {
 }
 
 async function handleNewUser(socket: SocketType, token: string) {
-  console.log("handleNewUser's token: " + token);
   await setUserData({
     client,
     token,
@@ -132,9 +129,7 @@ async function updateSocketIdIfChanged(
 }
 
 async function handleDisconnection(socket: Socket) {
-  console.log('user disconnected');
   const token = socket.handshake.auth['token'];
-  console.log("user's token: " + token);
   await setUserData({
     client,
     token: socket.data.token,

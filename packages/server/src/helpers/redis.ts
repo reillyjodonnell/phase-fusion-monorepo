@@ -60,11 +60,8 @@ export async function setLobbyData({
 }: SetLobbyDataProps): Promise<void> {
   // Convert data to a format suitable for hSet (flattened key-value pairs)
   try {
-    console.log('Setting lobby data');
     await client.set(`lobby:${lobbyCode}`, JSON.stringify(lobbyData));
-  } catch (err) {
-    console.log("setLobbyData's error: " + err);
-  }
+  } catch (err) {}
 }
 
 interface DeleteLobbyDataProps {

@@ -45,13 +45,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     setSocketRef(connection);
 
-    connection.on('token', async (token) => {
+    async function tokenCallback(token: string) {
       try {
         await setAsyncStorageId(token);
       } catch (err) {}
       //@ts-ignore
       connection.auth.token = token;
-    });
+    }
+
+    connection.on('token', tokenCallback);
 
     return () => {
       if (connection) {

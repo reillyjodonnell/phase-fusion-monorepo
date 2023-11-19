@@ -25,7 +25,7 @@ export default function Title({
 
   function joinLobby() {
     setError('');
-    socket?.emit('join lobby', roomCode, user.id, (lobby: Lobby) => {
+    socket?.emit('joinLobby', roomCode, user.id, (lobby) => {
       if (lobby) {
         redirectToLobby(lobby);
         return;

@@ -12,7 +12,6 @@ export function CreateProfile({
 
   const { user, setUser } = useUser();
   function sendProfile() {
-    console.log(socket?.connected);
     socket?.emit('updateProfile', user, (user: User) => {
       if (user) {
         setUser(user);
