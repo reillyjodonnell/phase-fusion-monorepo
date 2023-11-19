@@ -14,14 +14,11 @@ export const setupLobbyListeners = (
   client: RedisClientType
 ) => {
   socket.on('createLobby', async (userId, callback) => {
-    console.log('Create lobby');
     // continue to generate a room code until it's unique
     let unique = false;
     let roomCode = '';
-    console.log('Wut');
 
     while (!unique) {
-      console.log('Here');
       // generate a room code
       roomCode = randomstring.generate({
         capitalization: 'uppercase',
@@ -34,7 +31,6 @@ export const setupLobbyListeners = (
         unique = true;
       }
     }
-    console.log('line 37');
 
     // fetch the user's profile
     const user = await getUserData({ client, token: userId });
@@ -44,9 +40,9 @@ export const setupLobbyListeners = (
       return;
     }
 
-    const formattedUser: Partial<User> = {
+    const formattedUser: User = {
       ...user,
-      isReady: 'false',
+      isReady: false,
       roomCode,
     };
 
@@ -152,13 +148,22 @@ export const setupLobbyListeners = (
     }
   );
 
-  socket.on('leave lobby', async (userId, roomCode, callback) => {
-    // get the current state
-    const data = JSON.parse((await client.GET(`lobby:${roomCode}`)) ?? 'null');
+  socket.on('leaveLobby', async (userId, roomCode, callback) => {
+    const data = await getLobbyData({ client, lobbyCode: roomCode });
+
+    if (!data) throw new Error('Lobby not found');
+
+    const userLeftLoby: Partial<User> = {
+      roomCode: '',
+    };
+    console.log(data);
+    await setUserData({ client, token: userId, data: userLeftLoby });
 
     // if this is the last player in the lobby, delete the lobby
     if (data.players.length === 1) {
-      await client.DEL(`lobby:${roomCode}`);
+      console.log('Only one player left, deleting lobby');
+      const res = await client.DEL(`lobby:${roomCode}`);
+      console.log(res);
       callback(null);
       // remove the lobby from the socket
       socket.leave(roomCode);
@@ -169,16 +174,12 @@ export const setupLobbyListeners = (
       players: data.players.filter((player: Player) => player.id !== userId),
     };
 
-    const user = JSON.parse((await client.GET(`user:${userId}`)) ?? 'null');
-
-    const userLeftLoby = {
-      ...user,
-      roomCode: null,
-    };
-
-    await client.SET(`user:${userId}`, JSON.stringify(userLeftLoby));
     try {
-      await client.SET(`lobby:${roomCode}`, JSON.stringify(updatedLobby));
+      await setLobbyData({
+        client,
+        lobbyCode: roomCode,
+        lobbyData: updatedLobby,
+      });
       callback(updatedLobby);
       // emit to lobby
       io.to(roomCode).emit('player left', userId);

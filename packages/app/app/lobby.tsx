@@ -189,16 +189,11 @@ export function Lobby({
 
       <TouchableOpacity
         onPress={() => {
-          socket?.emit(
-            'leave lobby',
-            user.id,
-            lobby.roomCode,
-            (data: Lobby) => {
-              if (!data) {
-                return;
-              }
+          socket?.emit('leaveLobby', user.id, lobby.roomCode, (data: Lobby) => {
+            if (!data) {
+              return;
             }
-          );
+          });
           returnToMenu();
         }}
         className={`w-3/4 px-6 py-4 bg-[#1b1b1b85] border-[#ffffffbf]
