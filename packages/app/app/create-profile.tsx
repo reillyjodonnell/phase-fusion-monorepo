@@ -23,14 +23,8 @@ export function CreateProfile({
     <View className="flex justify-center items-center">
       <View className="flex justify-center items-center">
         <View className="justify-start py-4 mt-auto mb-auto">
-          <Text className="text-4xl py-2 font-extrabold text-center text-[#a1a1aa]">
-            Welcome to
-          </Text>
           <Text className="text-6xl text-[#fafafa] font-extrabold shadow text-center py-4 ">
             Phase Fusion!
-          </Text>
-          <Text className="text-6xl text-[#fafafa] font-extrabold shadow text-center py-4 ">
-            {user.name}
           </Text>
         </View>
         <TextInput

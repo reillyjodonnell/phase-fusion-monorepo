@@ -3,8 +3,15 @@ import { Home } from './app/home/home';
 import ProviderWrappers from './app/provider-wrappers';
 import { ImageBackground, SafeAreaView } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useFonts } from 'expo-font';
 
 export default function App() {
+  // const [fontsLoaded] = useFonts({
+  //   Orbitron: require('./assets/fonts/Orbitron-Black.ttf'),
+  // });
+
+  // if (!fontsLoaded) return null;
+
   return (
     <Wrapper>
       <Home />

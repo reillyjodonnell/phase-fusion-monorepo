@@ -12,7 +12,7 @@ import {
   ServerToClientEvents,
 } from '@phase-fusion/shared/socket';
 
-type SocketType = Socket<ServerToClientEvents, ClientToServerEvents>;
+export type SocketType = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 // 1. Create a SocketContext
 const SocketContext = createContext<SocketType | null>(null);
@@ -35,13 +35,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     if (socketRef) return;
 
     const connection: Socket<ServerToClientEvents, ClientToServerEvents> = io(
-      'http://192.168.86.30:3000',
+      'http://192.168.86.22:3000',
       {
         auth: {
           token: userId,
         },
       }
     );
+
+    if (!connection) throw new Error('Connection is null. Is server running?');
 
     setSocketRef(connection);
 

@@ -14,6 +14,7 @@ export const setupLobbyListeners = (
   client: RedisClientType
 ) => {
   socket.on('createLobby', async (userId, callback) => {
+    console.log('createLobby');
     // continue to generate a room code until it's unique
     let unique = false;
     let roomCode = '';
@@ -23,6 +24,7 @@ export const setupLobbyListeners = (
       roomCode = randomstring.generate({
         capitalization: 'uppercase',
         length: 6,
+        charset: 'alphabetic',
       });
       // check if that room code exists within the database
       const exists = await getLobbyData({ client, lobbyCode: roomCode });

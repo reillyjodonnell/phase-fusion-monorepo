@@ -28,7 +28,9 @@ interface ServerToClientProfileEvents {
   showCreateProfile: () => void;
 }
 
-interface ServerToClientGameEvents {}
+interface ServerToClientGameEvents {
+  redirectUserToGame: (state: string) => void;
+}
 
 export interface ServerToClientEvents
   extends ServerToClientLobbyEvents,
@@ -38,7 +40,9 @@ export interface ServerToClientEvents
   // Add more events as per your application's requirements
 }
 
-export interface ClientToServerEvents {
+// CLIENT TO SERVER
+
+interface ClientToServerLobbyEvents {
   createLobby: (
     userId: string,
     callback: (lobby: Lobby | null) => void
@@ -59,6 +63,19 @@ export interface ClientToServerEvents {
     roomCode: string,
     callback: (lobby: Lobby | null) => void
   ) => void;
+}
+
+interface ClientToServerProfileEvents {}
+
+interface ClientToServerGameEvents {
+  newGame: (lobbyId: string, callback: (gameId: string) => void) => void;
+  drawFromDeck: (lobbyId: string, userId: string) => void;
+}
+
+export interface ClientToServerEvents
+  extends ClientToServerLobbyEvents,
+    ClientToServerGameEvents,
+    ClientToServerProfileEvents {
   updateProfile: (userData: User, callback: (response: User) => void) => void;
 
   // Add other client-to-server events as needed

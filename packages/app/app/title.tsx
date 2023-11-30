@@ -48,14 +48,11 @@ export default function Title({
         }}
       >
         <View className="justify-start py-4 mt-auto mb-auto">
-          <Text className="text-4xl py-2 font-extrabold text-center text-[#a1a1aa]">
-            Welcome {name ? 'back' : ''} to
+          <Text className="text-8xl text-[#fafafa] font-extrabold shadow text-center ">
+            Phase
           </Text>
-          <Text className="text-6xl text-[#fafafa] font-extrabold shadow text-center py-4 ">
-            Phase Fusion!
-          </Text>
-          <Text className="text-6xl text-[#fafafa] font-extrabold shadow text-center py-4 ">
-            {name}
+          <Text className="text-8xl text-[#fafafa] font-extrabold shadow text-center">
+            Fusion
           </Text>
         </View>
         <View className="mb-auto w-full flex justify-center items-center">
@@ -98,7 +95,6 @@ export default function Title({
               placeholderTextColor={'white'}
               className="w-full min-w-[75%] px-6 py-4  rounded-xl border-[3px] placeholder:text-2xl placeholder:text-white border-white bg-[#ffffff5b]"
             />
-
             <TouchableOpacity
               disabled={roomCode.length === 0}
               onPress={joinLobby}
@@ -125,5 +121,32 @@ export default function Title({
         </View>
       </ScrollView>
     </View>
+  );
+}
+
+function InteractableButton({
+  children,
+  onPress,
+}: {
+  children: React.ReactNode;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      className="w-80 h-16 rounded-full bg-[black] border-[#fcfaf3] border-4 justify-center items-center"
+      onPress={onPress}
+    >
+      <View
+        style={{
+          shadowOffset: { width: 0, height: 8 },
+          shadowColor: '#000000be',
+          shadowOpacity: 1,
+          shadowRadius: 8,
+        }}
+        className="w-full h-full border-4 flex justify-center items-center bg-[#ffa244] rounded-full border-[#ab7e56] -p-2 "
+      >
+        <Text className="font-extrabold text-xl text-white">{children}</Text>
+      </View>
+    </TouchableOpacity>
   );
 }

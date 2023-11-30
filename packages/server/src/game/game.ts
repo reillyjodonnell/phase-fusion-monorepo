@@ -5,6 +5,7 @@ import {
   sortCards,
   shuffleDeck,
   dealCards,
+  retrievePlayerById,
 } from '../game/utils/helpers';
 import {
   GameState,
@@ -27,7 +28,8 @@ import { getPointsFromHand } from '../game/points/points';
 import { type Server, type Socket } from 'socket.io';
 import { type DefaultEventsMap } from 'socket.io/dist/typed-events';
 import { generateId } from '../helpers/helper';
-import { RedisClientType } from '..';
+import { IOType, RedisClientType, SocketType } from '..';
+import { getLobbyData, getUserData } from '../helpers/redis';
 
 export type Lobby = {
   id: string;
@@ -38,26 +40,30 @@ export type Lobby = {
 };
 
 export const setupGameListeners = (
-  socket: Socket,
-  io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>,
+  socket: SocketType,
+  io: IOType,
   client: RedisClientType
 ) => {
   socket.on('error', (error) => {
     //console.log('Socket error:', error);
   });
 
-  socket.on('new game', (lobby, callback) => {
+  socket.on('newGame', async (lobbyId, callback) => {
     // get the default state of a new game
     const defaultGameState = getDefaultGameState();
 
     const gameId = generateId();
+
+    const lobby = await getLobbyData({ client, lobbyCode: lobbyId });
+
+    if (!lobby) throw new Error('Lobby not found!');
 
     // set the game id
     const updatedGameState: GameState = {
       ...defaultGameState,
       roomCode: lobby.roomCode,
       id: gameId,
-      lobby: lobby.players.map((player: Player) => {
+      lobby: lobby.players.map((player) => {
         return {
           ...player,
           hand: [],
@@ -72,9 +78,10 @@ export const setupGameListeners = (
     setGameState(client, updatedGameState);
 
     function redirectAllUsersToGame(state: GameState) {
+      if (!lobby) throw new Error('Lobby not found!');
       //console.log('REDIRECTALLUSERSTOGAME');
-      callback(state);
-      io.to(lobby.roomCode).emit('redirect user to game', state);
+      callback(JSON.stringify(state));
+      io.to(lobby.roomCode).emit('redirectUserToGame', JSON.stringify(state));
     }
 
     startGame(io, client, redirectAllUsersToGame, updatedGameState);
@@ -92,8 +99,8 @@ export const setupGameListeners = (
     takeDiscardCard({ name: playerName, socket, io, callback });
   });
 
-  socket.on('draw from deck', (name) => {
-    drawFromDeck(name, socket);
+  socket.on('drawFromDeck', (roomCode, userId) => {
+    drawFromDeck({ roomCode, userId, socket, client });
   });
 
   // Handle the discard from the player after taking the center card or drawing from the deck
@@ -204,13 +211,12 @@ function emitGameEvents({
   // for each user get each user profile
   state.lobby.forEach(async (player, index) => {
     // get the user profile
-    const data = await client.get(`user:${player.id}`);
+    const data = await getUserData({ client, token: player.id });
     if (!data) {
-      //console.log('User not found');
+      console.log('User not found');
       return;
     }
-    const jsonUser = JSON.parse(data);
-    const socketId = jsonUser.socketId;
+    const socketId = data.socketId;
 
     const targetSocket = io.sockets.sockets.get(socketId);
 
@@ -298,11 +304,26 @@ function setupPotCard(state: GameState): GameState {
   return updateDiscardCard({ state: stateWithUpdatedDeck, card: discardCard! });
 }
 
-function drawFromDeck(name: string, socket: Socket) {
-  const gameState = getGameState();
+async function drawFromDeck({
+  roomCode,
+  socket,
+  userId,
+  client,
+}: {
+  roomCode: string;
+  userId: string;
+  socket: SocketType;
+  client: RedisClientType;
+}) {
+  console.log('Retrieving game:' + roomCode);
+  const gameState = await getGameState(client, roomCode);
+  console.log(gameState);
+
+  if (!gameState) throw new Error('Game state not found');
+
   if (
-    gameState.currentPlayerIndex === null ||
-    gameState.lobby[gameState.currentPlayerIndex]?.name !== name
+    gameState?.currentPlayerIndex === null ||
+    gameState?.lobby[gameState.currentPlayerIndex]?.id !== userId
   ) {
     socket.emit('error', "It's not your turn!");
     return;
@@ -317,7 +338,7 @@ function drawFromDeck(name: string, socket: Socket) {
       throw new Error('Drawn card is undefined / null');
     }
     // Find the player's hand
-    const player = retrievePlayerByName(updatedState.lobby, name);
+    const player = retrievePlayerById(updatedState.lobby, userId);
     if (!player) {
       //console.log('Player not found');
       socket.emit('error', 'Player not found');
@@ -341,7 +362,7 @@ function drawFromDeck(name: string, socket: Socket) {
       drawnCard
     );
 
-    setGameState(newState);
+    setGameState(client, newState);
 
     //console.log(`${name} drew a card from the deck`);
   } else {

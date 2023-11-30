@@ -37,13 +37,19 @@ export interface GameState {
   isJoinable: boolean;
 }
 
-export default function GameManager({ game }: { game: GameState }) {
+export default function GameManager({ game }: { game: string }) {
   const socket = useSocket();
   const { user } = useUser();
 
-  const usersInfo = game.lobby.filter((player) => player.id !== user.id);
+  const parsedState = JSON.parse(game);
 
-  const opponentInfo = game.lobby.filter((player) => player.id === user.id);
+  console.log(parsedState);
+
+  const usersInfo = parsedState.lobby.filter((player) => player.id !== user.id);
+
+  const opponentInfo = parsedState.lobby.filter(
+    (player) => player.id === user.id
+  );
 
   const currentPhase = usersInfo[0].phase;
 
@@ -52,17 +58,18 @@ export default function GameManager({ game }: { game: GameState }) {
 
   const [cards, setCards] = React.useState<Card[]>(usersInfo[0].hand);
 
-  const currentPlayerIndex = game.currentPlayerIndex;
+  const currentPlayerIndex = parsedState.currentPlayerIndex;
 
   // who is the player at that index?
   const isPlayersTurn =
-    game.lobby.findIndex((player) => player.id === user.id) ===
+    parsedState.lobby.findIndex((player) => player.id === user.id) ===
     currentPlayerIndex;
 
   if (!socket) return null;
 
   return (
     <Game
+      roomCode={parsedState.roomCode}
       isPlayersTurn={isPlayersTurn}
       cards={cards}
       opponentName={opponentName}
@@ -70,7 +77,7 @@ export default function GameManager({ game }: { game: GameState }) {
       setCards={setCards}
       currentPhase={currentPhase}
       name={usersInfo[0].name}
-      initialDiscardCard={game.discardCard!}
+      initialDiscardCard={parsedState.discardCard!}
       socket={socket}
     />
   );

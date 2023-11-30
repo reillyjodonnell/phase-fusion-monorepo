@@ -37,7 +37,7 @@ export function Lobby({
   const socket = useSocket();
 
   useEffect(() => {
-    socket?.on('redirect user to game', (game: any) => {
+    socket?.on('redirectUserToGame', (game: any) => {
       setGame(game);
       setLobby(null);
     });
@@ -136,7 +136,7 @@ export function Lobby({
   }
 
   function playGame() {
-    socket?.emit('new game', lobby, (gameState: any) => {
+    socket?.emit('newGame', lobby.roomCode, (gameState: any) => {
       setGame(gameState);
     });
     setLobby(null);

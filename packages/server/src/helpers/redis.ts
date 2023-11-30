@@ -21,6 +21,7 @@ export async function setUserData({
 }: SetUserTokenProps): Promise<void> {
   // redis doesn't support boolean values so we have to convert to a string
   if (typeof data.isReady === 'boolean') {
+    //@ts-ignore
     data.isReady = data.isReady.toString();
   }
   await client.hSet(`user:${token}`, data);
@@ -37,7 +38,9 @@ export async function getUserData({
 }: GetUserDataProps): Promise<User | null> {
   try {
     const data = await client.hGetAll(`user:${token}`);
+    ///@ts-ignore
     if (data && typeof data.isReady === 'string') {
+      ///@ts-ignore
       data.isReady = data.isReady === 'true';
     }
     return data && Object.keys(data).length > 0 ? (data as User) : null;

@@ -10,6 +10,16 @@ export function retrievePlayerByName(lobby: Player[], name: string): Player {
   return foundPlayer;
 }
 
+export function retrievePlayerById(lobby: Player[], id: string): Player {
+  if (!lobby) throw new Error('Lobby is undefined');
+  if (!id) throw new Error('Name is undefined');
+
+  const foundPlayer = lobby.find((player) => player.id === id);
+  if (!foundPlayer) throw new Error('Player not found');
+
+  return foundPlayer;
+}
+
 // Path: src/game.ts
 
 export type Color = 'red' | 'green' | 'blue' | 'yellow';

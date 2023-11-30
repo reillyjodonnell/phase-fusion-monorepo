@@ -1,7 +1,7 @@
 import { type Socket } from 'socket.io';
 import { type Card } from './utils/helpers';
 import { produce } from 'immer';
-import { RedisClientType } from 'redis';
+import { RedisClientType } from '..';
 
 type Pile = Card[][];
 
@@ -31,7 +31,7 @@ export interface GameState {
   deck: Card[];
   lobby: Player[];
   currentPlayerIndex: number;
-  roomCode: null;
+  roomCode: string | null;
   isJoinable: boolean;
 }
 

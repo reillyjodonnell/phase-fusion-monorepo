@@ -12,8 +12,12 @@ import { evaluatePhaseCompletion } from './phases/helpers/phases-helper';
 import usePlayersTurn from './custom-hooks/use-players-turn';
 import usePile from './custom-hooks/use-pile';
 import DiscardPile from './discard-pile';
+import { SocketData } from '@phase-fusion/shared/socket';
+import { SocketType } from './contexts/socket-context';
+import { useUser } from './contexts/user-context';
 
-export default function Lobby({
+export default function Game({
+  roomCode,
   name,
   socket,
   currentPhase,
@@ -24,8 +28,9 @@ export default function Lobby({
   initialDiscardCard,
   isPlayersTurn: defaultIsPlayersTurn,
 }: {
+  roomCode: string;
   name: string;
-  socket: Socket;
+  socket: SocketType;
   currentPhase: number;
   opponentName: string;
   opponentsPhaseNumber: number;
@@ -34,6 +39,7 @@ export default function Lobby({
   initialDiscardCard: CardType;
   isPlayersTurn: boolean;
 }) {
+  console.log(roomCode);
   // state
   const [opponentCardLength, setOpponentCardLength] = React.useState(10);
   const [hasDrawn, setHasDrawn] = React.useState(false);
@@ -54,6 +60,8 @@ export default function Lobby({
     setHasDrawn,
     defaultIsPlayersTurn
   );
+
+  const { user } = useUser();
 
   useEffect(() => {
     socket.on('cards', (cards, opponentsCardsLength, drawnCard) => {
@@ -93,7 +101,7 @@ export default function Lobby({
   function drawFromDeck() {
     if (!canPlayerDrawCard) return;
     setHasDrawn(true);
-    socket.emit('draw from deck', name);
+    socket.emit('drawFromDeck', roomCode, user.id);
   }
 
   function submitPhase() {
